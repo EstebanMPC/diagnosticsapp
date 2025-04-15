@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { OBDReader } from './obd';
+import './App.css';
 
 export default function App() {
   const [reader, setReader] = useState<OBDReader | null>(null);
@@ -44,9 +45,9 @@ export default function App() {
     <div className="app">
       <h1>OBD Code Reader</h1>
       <button onClick={connectBluetooth}>
-        {device ? 'Connected' : 'Connect to ELM327'}
+        {reader ? 'Connected' : 'Connect to ELM327'}
       </button>
-      <button onClick={readCodes} disabled={!device}>
+      <button onClick={readCodes} disabled={!reader}>
         Read Codes
       </button>
       <div className="codes">
