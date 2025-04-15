@@ -10,16 +10,24 @@ export default function App() {
 
   const connectBluetooth = async () => {
     try {
-      const device = await navigator.bluetooth.requestDevice({
-        filters: [{ namePrefix: 'OBDII' }],
-        optionalServices: ['fff0']
-      });
+      if (!navigator.bluetooth) {
+        alert('Bluetooth is not supported in this browser. Please use Chrome, Edge, or Opera.');
+        return;
+      }
+      
+      const device = await OBDReader.requestDevice();
       const newReader = new OBDReader(device);
       await newReader.connect();
       setReader(newReader);
     } catch (error) {
       console.error('Bluetooth connection failed:', error);
-      alert('Could not connect to ELM327. Make sure Bluetooth is enabled.');
+      if (error instanceof DOMException && error.name === 'NotFoundError') {
+        alert('No ELM327 devices found. Make sure your device is turned on and in range.');
+      } else if (error instanceof DOMException && error.name === 'SecurityError') {
+        alert('Bluetooth permission denied. Please enable Bluetooth and try again.');
+      } else {
+        alert('Could not connect to ELM327. Make sure Bluetooth is enabled and you are using a supported browser.');
+      }
     }
   };
 

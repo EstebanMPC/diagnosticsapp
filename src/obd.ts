@@ -7,6 +7,17 @@ export class OBDReader {
     this.device = device;
   }
 
+  static async requestDevice(): Promise<BluetoothDevice> {
+    return navigator.bluetooth.requestDevice({
+      filters: [
+        { namePrefix: 'OBDII' },
+        { services: ['fff0'] },
+        { manufacturerData: [{ companyIdentifier: 0x0000 }] }
+      ],
+      optionalServices: ['fff0', 'fff1']
+    });
+  }
+
   async connect() {
     const server = await this.device.gatt?.connect();
     const service = await server?.getPrimaryService('fff0');
