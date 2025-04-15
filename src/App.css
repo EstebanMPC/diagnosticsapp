@@ -17,6 +17,14 @@ button {
   margin-top: 20px;
 }
 
+.error {
+  color: #ff0033;
+  background: #ffecec;
+  padding: 10px;
+  border-radius: 4px;
+  margin: 10px 0;
+}
+
 .code-item {
   padding: 10px;
   margin: 5px;

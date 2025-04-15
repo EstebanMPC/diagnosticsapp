@@ -8,20 +8,47 @@ export class OBDReader {
   }
 
   static async requestDevice(): Promise<BluetoothDevice> {
+    if (!navigator.bluetooth) {
+      throw new Error('Bluetooth is not supported in this browser');
+    }
+
+    // More permissive filters for different OBD adapters
     return navigator.bluetooth.requestDevice({
       filters: [
+        { namePrefix: 'OBD' },
+        { namePrefix: 'ELM' },
         { namePrefix: 'OBDII' },
-        { services: ['fff0'] },
-        { manufacturerData: [{ companyIdentifier: 0x0000 }] }
+        { services: ['0000fff0-0000-1000-8000-00805f9b34fb'] }
       ],
-      optionalServices: ['fff0', 'fff1']
+      optionalServices: [
+        '0000fff0-0000-1000-8000-00805f9b34fb',
+        '0000fff1-0000-1000-8000-00805f9b34fb'
+      ]
     });
   }
 
   async connect() {
-    const server = await this.device.gatt?.connect();
-    const service = await server?.getPrimaryService('fff0');
-    this.characteristic = await service?.getCharacteristic('fff1');
+    try {
+      const server = await this.device.gatt?.connect();
+      if (!server) throw new Error('Failed to connect to GATT server');
+      
+      // Try common OBD adapter service UUIDs
+      let service;
+      try {
+        service = await server.getPrimaryService('0000fff0-0000-1000-8000-00805f9b34fb');
+      } catch {
+        service = await server.getPrimaryService('fff0');
+      }
+      
+      try {
+        this.characteristic = await service.getCharacteristic('0000fff1-0000-1000-8000-00805f9b34fb');
+      } catch {
+        this.characteristic = await service.getCharacteristic('fff1');
+      }
+    } catch (error) {
+      console.error('Connection error:', error);
+      throw new Error('Failed to establish Bluetooth connection');
+    }
   }
 
   async sendCommand(command: string): Promise<string> {
@@ -39,6 +66,7 @@ export class OBDReader {
 
   async getDiagnosticCodes(): Promise<string[]> {
     try {
+      // Initialize connection
       await this.sendCommand('ATZ'); // Reset
       await this.sendCommand('ATE0'); // Echo off
       await this.sendCommand('ATL0'); // Linefeeds off
