@@ -11,7 +11,12 @@ export default function App() {
   const connectBluetooth = async () => {
     try {
       if (!navigator.bluetooth) {
-        alert('Bluetooth is not supported on iOS browsers. Please use the Replit mobile app for iOS, or use Chrome/Edge/Opera on Android or desktop.');
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        if (isIOS) {
+          alert('Please use the Replit mobile app for Bluetooth functionality on iOS devices. The app provides better device compatibility.');
+        } else {
+          alert('Bluetooth is not supported in this browser. Please use Chrome, Edge, or Opera.');
+        }
         return;
       }
       
