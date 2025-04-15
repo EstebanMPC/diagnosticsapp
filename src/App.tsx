@@ -1,17 +1,21 @@
 
 import React, { useState } from 'react';
+import { OBDReader } from './obd';
 
 export default function App() {
-  const [device, setDevice] = useState<any>(null);
+  const [reader, setReader] = useState<OBDReader | null>(null);
   const [codes, setCodes] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const connectBluetooth = async () => {
     try {
       const device = await navigator.bluetooth.requestDevice({
         filters: [{ namePrefix: 'OBDII' }],
-        optionalServices: ['generic_access']
+        optionalServices: ['fff0']
       });
-      setDevice(device);
+      const newReader = new OBDReader(device);
+      await newReader.connect();
+      setReader(newReader);
     } catch (error) {
       console.error('Bluetooth connection failed:', error);
       alert('Could not connect to ELM327. Make sure Bluetooth is enabled.');
@@ -19,12 +23,21 @@ export default function App() {
   };
 
   const readCodes = async () => {
-    if (!device) {
+    if (!reader) {
       alert('Please connect to ELM327 first');
       return;
     }
-    // This is where we would implement the actual OBD-II protocol
-    // communication with the ELM327 device
+    
+    setLoading(true);
+    try {
+      const diagnosticCodes = await reader.getDiagnosticCodes();
+      setCodes(diagnosticCodes);
+    } catch (error) {
+      console.error('Failed to read codes:', error);
+      alert('Error reading diagnostic codes');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
